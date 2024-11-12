@@ -12,7 +12,7 @@ export default {
 
 <template>
    <v-app>
-    <v-layout class="rounded rounded-md">
+    <v-layout>
       <GlemaNavBar></GlemaNavBar>
       <GlemaNavigationDrawer></GlemaNavigationDrawer>
 
