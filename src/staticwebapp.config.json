@@ -1,0 +1,54 @@
+{
+  "trailingSlash": "auto",
+   "routes": [
+    {
+      "route": "/images/*",
+      "headers": {
+        "cache-control": "must-revalidate, max-age=15770000"
+      }
+    },
+    {
+      "route": "/home*"      
+    },
+    {
+      "route": "/settetre*"      
+    },
+    {
+      "route": "/about*"
+    },
+    {
+      "route": "/site.webmanifest",
+      "allowedRoles": ["anonymous", "authenticated"]
+      }
+  ],
+  "navigationFallback": {
+    "rewrite": "index.html",
+    "exclude": [
+      "/images/*.{png,jpg,gif}",
+      "/css/*"
+    ]
+  },
+  "responseOverrides": {
+    "400": {
+      "rewrite": "/invalid-invitation-error.html"
+    },
+    "401": {
+      "redirect": "/login",
+      "statusCode": 302
+    },
+   "403": {
+      "rewrite": "/custom-forbidden-page.html"
+    },
+    "404": {
+      "rewrite": "/404.html"
+    }
+  },
+  "globalHeaders": {
+    "content-security-policy": "img-src 'self' blob: data:;default-src https: wss: blob: data: 'unsafe-eval' 'unsafe-inline'; object-src 'none'",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS"
+  },
+  "mimeTypes": {
+    ".json": "text/json"
+  }
+}
