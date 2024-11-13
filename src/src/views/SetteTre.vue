@@ -7,13 +7,35 @@
     <v-card
       :loading="Loading"
       :title="CurrentDate"
-      subtitle="Fai click per iniziare"
-      :text="`Total: ${Elapsed} Single ${ElapsedSingle} ${
-        IsWaiting ? 'Wait' : 'Shoot'
-      } Data ${audioInputDetected}`"
+      subtitle="Fai click per iniziare"      
     >
-      <audio id="audioCapture"></audio>
-      <canvas id="audioCanvas"></canvas>
+    <v-card-text class="bg-surface-light pt-4">
+      <v-number-input
+      :reverse="false"
+      controlVariant="split"
+      label="Finestra di attesa"
+      :hideInput="false"
+      :inset="false"
+       v-model="WaitSeconds"
+    ></v-number-input>
+      <v-number-input
+      :reverse="false"
+      controlVariant="split"
+      label="Finestra di tiro"
+      :hideInput="false"
+      :inset="false"
+       v-model="ShootSeconds"
+    ></v-number-input>
+      <div>Totale {{ Elapsed }} </div>
+      <div>Sessione {{ ElapsedSingle }}</div>
+      <div>{{ IsWaiting ? "Aspetta" : "Spara"}}</div>
+      <div>Mic value {{audioInputDetected}}</div>
+      <ul>
+        <li v-for="a in testArray" :key="a">
+          {{ a }}
+        </li>
+      </ul>
+    </v-card-text>
       <v-card-actions>
         <GlemaButton
           @click="Start()"
@@ -34,17 +56,7 @@
           <v-tooltip activator="parent" location="top"
             >Stop</v-tooltip
           ></GlemaButton
-        >
-        <GlemaButton
-          @click="setupMicInputListener()"
-          icon="mdi-stop"
-          color="primary"
-          class="mx-1"
-        >
-          <v-tooltip activator="parent" location="top"
-            >Analyze</v-tooltip
-          ></GlemaButton
-        >
+        >       
       </v-card-actions>
     </v-card>
   </v-container>
@@ -56,6 +68,8 @@ import { useRootStore } from "@/rootStore";
 export default defineComponent({
   data: () => ({
     CurrentDate: "",
+    WaitSeconds:7,
+    ShootSeconds:3,
     Interval: null,
     StartTime: Date.now(),
     SingleStartTime: Date.now(),
@@ -64,10 +78,11 @@ export default defineComponent({
     Data: 0,
     ElapsedSingle: 0,
     Loading: false,
-    audioContext: null,
+    audioContext: new window.AudioContext(),
     analyser: null,
     microphone: null,
     audioInputDetected: 0,
+    testArray: [],
   }),
   methods: {
     Start() {
@@ -83,11 +98,11 @@ export default defineComponent({
         const singleElapsedTime = now - self.SingleStartTime;
         self.Elapsed = (elapsedTime / 1000).toFixed(3);
         self.ElapsedSingle = (singleElapsedTime / 1000).toFixed(3);
-        if (self.IsWaiting && self.ElapsedSingle >= 7) {
+        if (self.IsWaiting && self.ElapsedSingle >= self.WaitSeconds) {
           store.beep();
           self.SingleStartTime = Date.now();
           self.IsWaiting = false;
-        } else if (!self.IsWaiting && self.ElapsedSingle >= 3) {
+        } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
           store.beep();
           self.SingleStartTime = Date.now();
           self.IsWaiting = true;
@@ -100,25 +115,31 @@ export default defineComponent({
       clearInterval(this.Interval);
     },
     async setupMicInputListener(): void {
-      const threshold = 10;      
+      const threshold = 10;
       const self = this;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      this.audioContext = new window.AudioContext();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
       this.analyser = this.audioContext.createAnalyser();
-      this.analyser.smoothingTimeConstant = 0.8;
+      this.analyser.smoothingTimeConstant = 0;
       this.analyser.fftSize = 256;
       this.microphone = this.audioContext.createMediaStreamSource(stream);
       this.microphone.connect(this.analyser);
       setInterval(function () {
-        const audioLevel = self.getCurrentAverageMicInputLevel(stream);
-        console.log(audioLevel);
-        //self.audioInputDetected = audioLevel > threshold;
-        self.audioInputDetected = audioLevel;
-      },100);
+        if (!self.IsWaiting){
+          const audioLevel = self.getCurrentAverageMicInputLevel(stream);
+          console.log(audioLevel);
+          //self.audioInputDetected = audioLevel > threshold;
+          self.audioInputDetected = audioLevel;
+          if (self.audioInputDetected > threshold ||self.audioInputDetected < -threshold){
+            self.testArray.push(self.audioInputDetected)
+          }
+        }
+      }, 10);
     },
 
-    getCurrentAverageMicInputLevel(stream: MediaStream): number {
-
+    getCurrentAverageMicInputLevel(stream: MediaStream): string {
       const buffer = new Uint8Array(this.analyser.fftSize);
       this.analyser.getByteTimeDomainData(buffer);
       let values = 0;
@@ -130,13 +151,14 @@ export default defineComponent({
 
       const averageLevel = values / length;
 
-      return averageLevel;
+      return Math.abs(averageLevel - 127).toFixed(3);
     },
   },
   mounted() {
     const self = this;
+    this.setupMicInputListener();
     var constraints = { audio: true, video: false };
-        setInterval(() => {
+    setInterval(() => {
       const date = new Date();
       const dateString = date.toLocaleString("it-IT", {
         timeZone: "Europe/Rome",

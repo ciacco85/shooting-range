@@ -10,7 +10,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "swa": "swa start http://localhost:5173",
-    "devswa": "concurrently --kill-others \"npm run dev\" \"npm run swa\""
+    "devswa": "concurrently --kill-others \"npm run dev\" \"npm run swa\"",
+    "production-deploy": "vite build -- && swa deploy .\\dist\\ -R TestApp -n shooting-range --env production -d TOKEN"
   },
   "dependencies": {
     "pinia": "^2.2.6",
