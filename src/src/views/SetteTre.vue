@@ -1,41 +1,52 @@
 <template>
   <v-container>
-    <v-card-title primary-title>
-      <h2>Sette Tre</h2>
-    </v-card-title>
-    <GlemaFooter> </GlemaFooter>
-    <v-card
-      :loading="Loading"
-      :title="CurrentDate"
-      subtitle="Fai click per iniziare"      
-    >
-    <v-card-text class="bg-surface-light pt-4">
-      <v-number-input
-      :reverse="false"
-      controlVariant="split"
-      label="Finestra di attesa"
-      :hideInput="false"
-      :inset="false"
-       v-model="WaitSeconds"
-    ></v-number-input>
-      <v-number-input
-      :reverse="false"
-      controlVariant="split"
-      label="Finestra di tiro"
-      :hideInput="false"
-      :inset="false"
-       v-model="ShootSeconds"
-    ></v-number-input>
-      <div>Totale {{ Elapsed }} </div>
-      <div>Sessione {{ ElapsedSingle }}</div>
-      <div>{{ IsWaiting ? "Aspetta" : "Spara"}}</div>
-      <div>Mic value {{audioInputDetected}}</div>
-      <ul>
-        <li v-for="a in testArray" :key="a">
-          {{ a }}
-        </li>
-      </ul>
-    </v-card-text>
+    <v-card :loading="Loading" title="Sette Tre" :subtitle="CurrentDate">
+      <v-card-text class="bg-surface-light pt-4">
+        <v-number-input
+          :reverse="false"
+          controlVariant="split"
+          label="Colpi"
+          :hideInput="false"
+          :min="1"
+          :inset="false"
+          v-model="Shoots"
+        ></v-number-input>
+        <v-number-input
+          :reverse="false"
+          controlVariant="split"
+          label="Finestra di attesa"
+          :min="1"
+          :hideInput="false"
+          :inset="false"
+          v-model="WaitSeconds"
+        ></v-number-input>
+        <v-number-input
+          :reverse="false"
+          controlVariant="split"
+          label="Finestra di tiro"
+          :min="1"
+          :hideInput="false"
+          :inset="false"
+          v-model="ShootSeconds"
+        ></v-number-input>
+        <div>Totale {{ Elapsed }}</div>
+        <div>Sessione {{ ElapsedSingle }}</div>
+        <div>{{ IsWaiting ? "Aspetta" : "Spara" }}</div>
+        <div>Conteggio colpi {{ ShootCount }}</div>
+        <div>
+          Supporto schermo sempre accesso {{ WakeLockSupported ? "OK" : "KO" }}
+        </div>
+        <div>
+          Schermo sempre accesso {{ WakeLockActive ? "OK" : "KO" }}
+        </div>
+        <!-- <div>Mic value {{ audioInputDetected }}</div> -->
+        <ul>
+          <div>Colpi</div>
+          <li v-for="a in ShootsOnTime" :key="a">
+            {{ a }}
+          </li>
+        </ul>
+      </v-card-text>
       <v-card-actions>
         <GlemaButton
           @click="Start()"
@@ -56,7 +67,7 @@
           <v-tooltip activator="parent" location="top"
             >Stop</v-tooltip
           ></GlemaButton
-        >       
+        >
       </v-card-actions>
     </v-card>
   </v-container>
@@ -68,8 +79,10 @@ import { useRootStore } from "@/rootStore";
 export default defineComponent({
   data: () => ({
     CurrentDate: "",
-    WaitSeconds:7,
-    ShootSeconds:3,
+    WaitSeconds: 7,
+    ShootSeconds: 3,
+    Shoots: 5,
+    ShootCount: 0,
     Interval: null,
     StartTime: Date.now(),
     SingleStartTime: Date.now(),
@@ -78,31 +91,50 @@ export default defineComponent({
     Data: 0,
     ElapsedSingle: 0,
     Loading: false,
-    audioContext: new window.AudioContext(),
+    audioContext: null,
+    WakeLockSupported: false,
+    WakeLockActive: false,
     analyser: null,
     microphone: null,
+    MicRecInterval: null,
     audioInputDetected: 0,
-    testArray: [],
+    ShootsOnTime: [],
+    WakeLock: null,
   }),
   methods: {
-    Start() {
+    async Start() {
       const self = this;
       const store = useRootStore();
+
       store.beep();
       self.Loading = true;
+      self.ShootsOnTime = [];
       self.StartTime = Date.now();
       self.SingleStartTime = Date.now();
-      this.Interval = setInterval(function () {
+      
+      try {
+        self.WakeLock = await navigator.wakeLock.request("screen");
+        self.WakeLockActive = true;
+      } catch (err) {
+        // The Wake Lock request has failed - usually system related, such as battery.
+        self.WakeLockActive = `${err.name}, ${err.message}`;
+      }
+      self.Interval = setInterval(function () {
         const now = Date.now();
         const elapsedTime = now - self.StartTime;
         const singleElapsedTime = now - self.SingleStartTime;
         self.Elapsed = (elapsedTime / 1000).toFixed(3);
         self.ElapsedSingle = (singleElapsedTime / 1000).toFixed(3);
+        if (self.ShootCount >= self.Shoots) {
+          clearInterval(self.Interval);
+          self.Loading = false;
+        }
         if (self.IsWaiting && self.ElapsedSingle >= self.WaitSeconds) {
           store.beep();
           self.SingleStartTime = Date.now();
           self.IsWaiting = false;
         } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
+          self.ShootCount += 1;
           store.beep();
           self.SingleStartTime = Date.now();
           self.IsWaiting = true;
@@ -113,27 +145,31 @@ export default defineComponent({
       this.Loading = false;
       this.IsWaiting = true;
       clearInterval(this.Interval);
+      this.WakeLock.release();
     },
-    async setupMicInputListener(): void {
-      const threshold = 10;
+    async setupMicInputListener(): Promise<undefined> {
+      const threshold = 5;
       const self = this;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
+      this.audioContext = new window.AudioContext();
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.smoothingTimeConstant = 0;
       this.analyser.fftSize = 256;
       this.microphone = this.audioContext.createMediaStreamSource(stream);
       this.microphone.connect(this.analyser);
-      setInterval(function () {
-        if (!self.IsWaiting){
-          const audioLevel = self.getCurrentAverageMicInputLevel(stream);
-          console.log(audioLevel);
-          //self.audioInputDetected = audioLevel > threshold;
-          self.audioInputDetected = audioLevel;
-          if (self.audioInputDetected > threshold ||self.audioInputDetected < -threshold){
-            self.testArray.push(self.audioInputDetected)
+      this.MicRecInterval = setInterval(function () {
+        const audioLevel = self.getCurrentAverageMicInputLevel(stream);
+        console.log(audioLevel);
+        //self.audioInputDetected = audioLevel > threshold;
+        self.audioInputDetected = audioLevel;
+        if (self.audioInputDetected >= threshold) {
+          if (!self.IsWaiting) {
+            self.ShootsOnTime.push(true);
+          } else {
+            self.ShootsOnTime.push(false);
           }
         }
       }, 10);
@@ -155,9 +191,13 @@ export default defineComponent({
     },
   },
   mounted() {
-    const self = this;
     this.setupMicInputListener();
-    var constraints = { audio: true, video: false };
+    const self = this;
+    if ("wakeLock" in navigator) {
+      self.WakeLockSupported = true;
+    } else {
+      self.WakeLockSupported = false;
+    }
     setInterval(() => {
       const date = new Date();
       const dateString = date.toLocaleString("it-IT", {

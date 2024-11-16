@@ -1,27 +1,23 @@
 <script lang="ts">
-import { RouterView } from 'vue-router'
-import GlemaNavBar from './components/GlemaNavBar.vue'
-import GlemaNavigationDrawer from './components/GlemaNavigationDrawer.vue'
+import { RouterView } from "vue-router";
+import GlemaNavBar from "./components/GlemaNavBar.vue";
+import GlemaNavigationDrawer from "./components/GlemaNavigationDrawer.vue";
 export default {
   components: { GlemaNavBar, GlemaNavigationDrawer },
-  setup() {
-    
-  }
-}
+  setup() {},
+};
 </script>
 
 <template>
-   <v-app>
-    <v-layout>
+  <v-app>
+    <v-layout class="rounded rounded-md">
       <GlemaNavBar></GlemaNavBar>
       <GlemaNavigationDrawer></GlemaNavigationDrawer>
-
-      <v-main>
-        <v-container class="scrollable-content content">
-          <Suspense>
-            <RouterView />
-          </Suspense>
-        </v-container>
+      <v-main
+        class="d-flex align-center justify-center"
+        style="min-height: 300px"
+      >
+        <RouterView />
       </v-main>
     </v-layout>
   </v-app>
