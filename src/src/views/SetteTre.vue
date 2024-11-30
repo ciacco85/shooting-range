@@ -108,9 +108,22 @@ export default defineComponent({
 
       store.beep();
       self.Loading = true;
+      self.Elapsed = 0;
+      self.ElapsedSingle = 0;
+      self.ShootCount = 0;
       self.ShootsOnTime = [];
       self.StartTime = Date.now();
       self.SingleStartTime = Date.now();
+
+      self.IsWaiting= true
+      self.Data= 0,
+      self.audioContext= null
+      self.WakeLockActive= false
+      self.analyser= null
+      self.microphone= null
+      self.MicRecInterval= null
+      self.audioInputDetected= 0
+      self.ShootsOnTime= []
       
       try {
         self.WakeLock = await navigator.wakeLock.request("screen");
@@ -146,6 +159,7 @@ export default defineComponent({
       this.IsWaiting = true;
       clearInterval(this.Interval);
       this.WakeLock.release();
+      self.WakeLockActive = false;
     },
     async setupMicInputListener(): Promise<undefined> {
       const threshold = 5;

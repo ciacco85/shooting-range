@@ -19,7 +19,6 @@ export default defineComponent({
       get(): { valueOf: () => boolean } {
         return this.store.drawer
       },
-      // setter
       set(newValue: boolean) {
         this.store.drawer = newValue
       }
