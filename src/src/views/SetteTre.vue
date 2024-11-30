@@ -29,23 +29,33 @@
           :inset="false"
           v-model="ShootSeconds"
         ></v-number-input>
+        <div>
+          Schermo sempre accesso: supporto/attivo
+          {{ WakeLockSupported ? "OK" : "KO" }}/{{
+            WakeLockActive ? "OK" : "KO"
+          }}
+        </div>
+        <h2>
+          <strong>{{ IsWaiting ? "Aspetta" : "Spara" }}</strong>
+        </h2>
         <div>Totale {{ Elapsed }}</div>
         <div>Sessione {{ ElapsedSingle }}</div>
-        <div>{{ IsWaiting ? "Aspetta" : "Spara" }}</div>
         <div>Conteggio colpi {{ ShootCount }}</div>
-        <div>
-          Supporto schermo sempre accesso {{ WakeLockSupported ? "OK" : "KO" }}
-        </div>
-        <div>
-          Schermo sempre accesso {{ WakeLockActive ? "OK" : "KO" }}
-        </div>
-        <!-- <div>Mic value {{ audioInputDetected }}</div> -->
-        <ul>
-          <div>Colpi</div>
-          <li v-for="a in ShootsOnTime" :key="a">
-            {{ a }}
-          </li>
-        </ul>
+        
+        <v-table>
+          <thead>
+            <tr>
+              <th class="text-left">Tiro</th>
+              <th class="text-left">Esecuzione</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in ShootsOnTime" :key="item.tiro">
+              <td>{{ item.tiro }}</td>
+              <td>{{ item.risultato }}</td>
+            </tr>
+          </tbody>
+        </v-table>
       </v-card-text>
       <v-card-actions>
         <GlemaButton
@@ -70,6 +80,7 @@
         >
       </v-card-actions>
     </v-card>
+    <label>Sviluppata da Francesco Venturini. In caso di problemi aprire una issue sul seguente </label><a target="_blank" href="https://github.com/ciacco85/shooting-range">repo</a>
   </v-container>
 </template>
 
@@ -100,6 +111,7 @@ export default defineComponent({
     audioInputDetected: 0,
     ShootsOnTime: [],
     WakeLock: null,
+    ShootAcquired: false,
   }),
   methods: {
     async Start() {
@@ -115,16 +127,12 @@ export default defineComponent({
       self.StartTime = Date.now();
       self.SingleStartTime = Date.now();
 
-      self.IsWaiting= true
-      self.Data= 0,
-      self.audioContext= null
-      self.WakeLockActive= false
-      self.analyser= null
-      self.microphone= null
-      self.MicRecInterval= null
-      self.audioInputDetected= 0
-      self.ShootsOnTime= []
-      
+      self.IsWaiting = true;
+      self.Data = 0;
+      self.MicRecInterval = null;
+      self.audioInputDetected = 0;
+      self.ShootsOnTime = [];
+      self.ShootAcquired = false;
       try {
         self.WakeLock = await navigator.wakeLock.request("screen");
         self.WakeLockActive = true;
@@ -147,6 +155,7 @@ export default defineComponent({
           self.SingleStartTime = Date.now();
           self.IsWaiting = false;
         } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
+          self.ShootAcquired = false;
           self.ShootCount += 1;
           store.beep();
           self.SingleStartTime = Date.now();
@@ -159,19 +168,19 @@ export default defineComponent({
       this.IsWaiting = true;
       clearInterval(this.Interval);
       this.WakeLock.release();
-      self.WakeLockActive = false;
+      this.WakeLockActive = false;
     },
     async setupMicInputListener(): Promise<undefined> {
-      const threshold = 5;
+      const threshold = 10;
       const self = this;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
       this.audioContext = new window.AudioContext();
-      this.analyser = this.audioContext.createAnalyser();
-      this.analyser.smoothingTimeConstant = 0;
-      this.analyser.fftSize = 256;
+      self.analyser = self.audioContext.createAnalyser();
+      self.analyser.smoothingTimeConstant = 0;
+      self.analyser.fftSize = 128;
       this.microphone = this.audioContext.createMediaStreamSource(stream);
       this.microphone.connect(this.analyser);
       this.MicRecInterval = setInterval(function () {
@@ -179,11 +188,22 @@ export default defineComponent({
         console.log(audioLevel);
         //self.audioInputDetected = audioLevel > threshold;
         self.audioInputDetected = audioLevel;
-        if (self.audioInputDetected >= threshold) {
+        if (
+          self.audioInputDetected >= threshold &&
+          self.Loading &&
+          !self.ShootAcquired
+        ) {
+          self.ShootAcquired = true;
           if (!self.IsWaiting) {
-            self.ShootsOnTime.push(true);
+            self.ShootsOnTime.push({
+              tiro: self.ShootCount,
+              risultato: `OK`,
+            });
           } else {
-            self.ShootsOnTime.push(false);
+            self.ShootsOnTime.push({
+              tiro: self.ShootCount,
+              risultato: `KO`,
+            });
           }
         }
       }, 10);
@@ -201,7 +221,7 @@ export default defineComponent({
 
       const averageLevel = values / length;
 
-      return Math.abs(averageLevel - 127).toFixed(3);
+      return Math.abs(averageLevel - 127).toFixed(2);
     },
   },
   mounted() {
