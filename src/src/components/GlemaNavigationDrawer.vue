@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer v-model="drawer" app>
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-account-group" title="Sette Tre" to="/settetre" />
+      <v-list-item prepend-icon="mdi-account-group" title="Sette Tre" to="/" />
       
     </v-list>
   </v-navigation-drawer>
@@ -19,7 +19,6 @@ export default defineComponent({
       get(): { valueOf: () => boolean } {
         return this.store.drawer
       },
-      // setter
       set(newValue: boolean) {
         this.store.drawer = newValue
       }
