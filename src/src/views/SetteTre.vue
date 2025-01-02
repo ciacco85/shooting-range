@@ -2,33 +2,63 @@
   <v-container>
     <v-card :loading="Loading" title="Sette Tre" :subtitle="CurrentDate">
       <v-card-text class="bg-surface-light pt-4">
-        <v-number-input
-          :reverse="false"
-          controlVariant="split"
-          label="Colpi"
-          :hideInput="false"
-          :min="1"
-          :inset="false"
-          v-model="Shoots"
-        ></v-number-input>
-        <v-number-input
-          :reverse="false"
-          controlVariant="split"
-          label="Finestra di attesa"
-          :min="1"
-          :hideInput="false"
-          :inset="false"
-          v-model="WaitSeconds"
-        ></v-number-input>
-        <v-number-input
-          :reverse="false"
-          controlVariant="split"
-          label="Finestra di tiro"
-          :min="1"
-          :hideInput="false"
-          :inset="false"
-          v-model="ShootSeconds"
-        ></v-number-input>
+        <v-tabs v-model="tab" bg-color="primary">
+          <v-tab value="one">Configurazione</v-tab>
+          <v-tab value="two">Sperimentale</v-tab>
+        </v-tabs>
+        <v-card-text>
+          <v-tabs-window v-model="tab">
+            <v-tabs-window-item value="one">
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Colpi"
+                :hideInput="false"
+                :min="1"
+                :inset="false"
+                v-model="Shoots"
+              ></v-number-input>
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Finestra di attesa"
+                :min="1"
+                :hideInput="false"
+                :inset="false"
+                v-model="WaitSeconds"
+              ></v-number-input>
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Finestra di tiro"
+                :min="1"
+                :hideInput="false"
+                :inset="false"
+                v-model="ShootSeconds"
+              ></v-number-input>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="two">
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Soglia"
+                :hideInput="false"
+                :min="1"
+                :inset="false"
+                v-model="Threshold"
+              ></v-number-input>
+              <v-combobox
+                v-model="FFTsize"
+                label="FFT"
+                :items="[64, 128, 256, 512, 1024, 2048]"
+              ></v-combobox>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="three"> Three </v-tabs-window-item>
+          </v-tabs-window>
+        </v-card-text>
+
         <div>
           Schermo sempre accesso: supporto/attivo
           {{ WakeLockSupported ? "OK" : "KO" }}/{{
@@ -41,7 +71,7 @@
         <div>Totale {{ Elapsed }}</div>
         <div>Sessione {{ ElapsedSingle }}</div>
         <div>Conteggio colpi {{ ShootCount }}</div>
-        
+
         <v-table>
           <thead>
             <tr>
@@ -80,7 +110,12 @@
         >
       </v-card-actions>
     </v-card>
-    <label>Sviluppata da Francesco Venturini. In caso di problemi aprire una issue sul seguente </label><a target="_blank" href="https://github.com/ciacco85/shooting-range">repo</a>
+    <label
+      >Sviluppata da Francesco Venturini. In caso di problemi aprire una issue
+      sul seguente </label
+    ><a target="_blank" href="https://github.com/ciacco85/shooting-range"
+      >repo</a
+    >
   </v-container>
 </template>
 
@@ -112,13 +147,16 @@ export default defineComponent({
     ShootsOnTime: [],
     WakeLock: null,
     ShootAcquired: false,
+    tab: null,
+    Threshold: 10,
+    FFTsize: 128,
   }),
   methods: {
     async Start() {
       const self = this;
       const store = useRootStore();
 
-      store.beep();
+      store.beep2();
       self.Loading = true;
       self.Elapsed = 0;
       self.ElapsedSingle = 0;
@@ -151,13 +189,13 @@ export default defineComponent({
           self.Loading = false;
         }
         if (self.IsWaiting && self.ElapsedSingle >= self.WaitSeconds) {
-          store.beep();
+          store.beep1();
           self.SingleStartTime = Date.now();
           self.IsWaiting = false;
         } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
           self.ShootAcquired = false;
           self.ShootCount += 1;
-          store.beep();
+          store.beep2();
           self.SingleStartTime = Date.now();
           self.IsWaiting = true;
         }
@@ -171,7 +209,6 @@ export default defineComponent({
       this.WakeLockActive = false;
     },
     async setupMicInputListener(): Promise<undefined> {
-      const threshold = 10;
       const self = this;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -180,7 +217,7 @@ export default defineComponent({
       this.audioContext = new window.AudioContext();
       self.analyser = self.audioContext.createAnalyser();
       self.analyser.smoothingTimeConstant = 0;
-      self.analyser.fftSize = 128;
+      self.analyser.fftSize = self.FFTsize;
       this.microphone = this.audioContext.createMediaStreamSource(stream);
       this.microphone.connect(this.analyser);
       this.MicRecInterval = setInterval(function () {
@@ -189,7 +226,7 @@ export default defineComponent({
         //self.audioInputDetected = audioLevel > threshold;
         self.audioInputDetected = audioLevel;
         if (
-          self.audioInputDetected >= threshold &&
+          self.audioInputDetected >= self.Threshold &&
           self.Loading &&
           !self.ShootAcquired
         ) {
