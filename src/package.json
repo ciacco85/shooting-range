@@ -11,7 +11,7 @@
     "type-check": "vue-tsc --build --force",
     "swa": "swa start http://localhost:5173 --run \"npm run dev\"",
     "devswa": "concurrently --kill-others \"npm run dev\" \"npm run swa\"",
-    "production-deploy": "vite build -- && swa deploy .\\dist\\ -R TestApp -n shooting-range --env production -d 58ab0a44dce17002e2335e81a257f38eb50a1943d463fa86a1d07faa2f2e52af05-fd1c4262-1b70-4060-be75-f8349162ddf40030814011e55c03"
+    "production-deploy": "vite build -- && swa deploy .\\dist\\ -R TestApp -n shooting-range --env production -d TOKEN"
   },
   "dependencies": {
     "pinia": "^2.2.6",

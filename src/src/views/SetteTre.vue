@@ -1,93 +1,12 @@
 <template>
   <v-container>
-    <v-card :loading="Loading" title="Sette Tre" :subtitle="CurrentDate">
-      <v-card-text class="bg-surface-light pt-4">
-        <v-tabs v-model="tab" bg-color="primary">
-          <v-tab value="one">Configurazione</v-tab>
-          <v-tab value="two">Sperimentale</v-tab>
-        </v-tabs>
-        <v-card-text>
-          <v-tabs-window v-model="tab">
-            <v-tabs-window-item value="one">
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Colpi"
-                :hideInput="false"
-                :min="1"
-                :inset="false"
-                v-model="Shoots"
-              ></v-number-input>
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Finestra di attesa"
-                :min="1"
-                :hideInput="false"
-                :inset="false"
-                v-model="WaitSeconds"
-              ></v-number-input>
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Finestra di tiro"
-                :min="1"
-                :hideInput="false"
-                :inset="false"
-                v-model="ShootSeconds"
-              ></v-number-input>
-            </v-tabs-window-item>
-
-            <v-tabs-window-item value="two">
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Soglia"
-                :hideInput="false"
-                :min="1"
-                :inset="false"
-                v-model="Threshold"
-              ></v-number-input>
-              <v-combobox
-                v-model="FFTsize"
-                label="FFT"
-                :items="[64, 128, 256, 512, 1024, 2048]"
-              ></v-combobox>
-            </v-tabs-window-item>
-
-            <v-tabs-window-item value="three"> Three </v-tabs-window-item>
-          </v-tabs-window>
-        </v-card-text>
-
-        <div>
-          Schermo sempre accesso: supporto/attivo
-          {{ WakeLockSupported ? "OK" : "KO" }}/{{
-            WakeLockActive ? "OK" : "KO"
-          }}
-        </div>
-        <h2>
-          <strong>{{ IsWaiting ? "Aspetta" : "Spara" }}</strong>
-        </h2>
-        <div>Totale {{ Elapsed }}</div>
-        <div>Sessione {{ ElapsedSingle }}</div>
-        <div>Conteggio colpi {{ ShootCount }}</div>
-
-        <v-table>
-          <thead>
-            <tr>
-              <th class="text-left">Tiro</th>
-              <th class="text-left">Esecuzione</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in ShootsOnTime" :key="item.tiro">
-              <td>{{ item.tiro }}</td>
-              <td>{{ item.risultato }}</td>
-            </tr>
-          </tbody>
-        </v-table>
-      </v-card-text>
-      <v-card-actions>
+    <v-card
+      :loading="Loading"
+      title="Sette Tre"
+      :subtitle="CurrentDate"
+      style="background-color: gold"
+    >
+      <v-card-actions style="background-color: beige">
         <GlemaButton
           @click="Start()"
           icon="mdi-play"
@@ -109,12 +28,107 @@
           ></GlemaButton
         >
       </v-card-actions>
+      <v-card-text class="bg-surface-light pt-4">
+        <v-tabs v-model="tab" bg-color="primary">
+          <v-tab value="one">Configurazione</v-tab>
+          <v-tab value="two">Sperimentale</v-tab>
+        </v-tabs>
+        <v-card-text>
+          <v-tabs-window v-model="tab">
+            <v-tabs-window-item value="one">
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Colpi"
+                :hideInput="false"
+                :min="1"
+                density="compact"
+                :inset="false"
+                v-model="Shoots"
+                class="disable-dbl-tap-zoom"
+              ></v-number-input>
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Finestra di attesa"
+                :min="1"
+                density="compact"
+                :hideInput="false"
+                :inset="false"
+                v-model="WaitSeconds"
+                class="disable-dbl-tap-zoom"
+              ></v-number-input>
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Finestra di tiro"
+                :min="1"
+                density="compact"
+                :hideInput="false"
+                :inset="false"
+                v-model="ShootSeconds"
+                class="disable-dbl-tap-zoom"
+              ></v-number-input>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="two">
+              <v-number-input
+                :reverse="false"
+                controlVariant="split"
+                label="Soglia"
+                :hideInput="false"
+                :min="1"
+                :inset="false"
+                v-model="Threshold"
+              ></v-number-input>
+              <v-combobox
+                v-model="FFTsize"
+                label="FFT"
+                :items="[64, 128, 256, 512, 1024, 2048]"
+              ></v-combobox>
+              <div>
+                Schermo sempre accesso: supporto/attivo
+                {{ WakeLockSupported ? "OK" : "KO" }}/{{
+                  WakeLockActive ? "OK" : "KO"
+                }}
+              </div>
+            </v-tabs-window-item>
+          </v-tabs-window>
+        </v-card-text>
+
+        <div v-if="ShowResult">
+          <h2>
+            <strong>{{ IsWaiting ? "In posizione" : "Spara" }}</strong>
+          </h2>
+          <div>Totale {{ Elapsed }}</div>
+          <div>Sessione {{ ElapsedSingle }}</div>
+          <div>Conteggio colpi {{ ShootCount }}</div>
+
+          <v-table>
+            <thead>
+              <tr>
+                <th class="text-left">Tiro</th>
+                <th class="text-left">Esecuzione</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in ShootsOnTime" :key="item.tiro">
+                <td>{{ item.tiro }}</td>
+                <td>{{ item.risultato }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+        <div v-else>
+          <h2><strong>Premi play</strong></h2>
+        </div>
+      </v-card-text>
     </v-card>
     <label
-      >Sviluppata da Francesco Venturini. In caso di problemi aprire una issue
-      sul seguente </label
+      >Sviluppata da Francesco Venturini. Per segnalazioni, aprire una issue sul
+      seguente </label
     ><a target="_blank" href="https://github.com/ciacco85/shooting-range"
-      >repo</a
+      >repository</a
     >
   </v-container>
 </template>
@@ -137,6 +151,7 @@ export default defineComponent({
     Data: 0,
     ElapsedSingle: 0,
     Loading: false,
+    ShowResult: false,
     audioContext: null,
     WakeLockSupported: false,
     WakeLockActive: false,
@@ -156,21 +171,6 @@ export default defineComponent({
       const self = this;
       const store = useRootStore();
 
-      store.beep2();
-      self.Loading = true;
-      self.Elapsed = 0;
-      self.ElapsedSingle = 0;
-      self.ShootCount = 0;
-      self.ShootsOnTime = [];
-      self.StartTime = Date.now();
-      self.SingleStartTime = Date.now();
-
-      self.IsWaiting = true;
-      self.Data = 0;
-      self.MicRecInterval = null;
-      self.audioInputDetected = 0;
-      self.ShootsOnTime = [];
-      self.ShootAcquired = false;
       try {
         self.WakeLock = await navigator.wakeLock.request("screen");
         self.WakeLockActive = true;
@@ -178,12 +178,29 @@ export default defineComponent({
         // The Wake Lock request has failed - usually system related, such as battery.
         self.WakeLockActive = `${err.name}, ${err.message}`;
       }
+
+      self.Loading = true;
+      self.ShowResult = true;
+      self.Elapsed = 0;
+      self.ElapsedSingle = 0;
+      self.ShootCount = 0;
+      self.ShootsOnTime = [];
+      self.IsWaiting = true;
+      self.Data = 0;
+      self.MicRecInterval = null;
+      self.audioInputDetected = 0;
+      self.ShootsOnTime = [];
+      self.ShootAcquired = false;
+
+      store.beep2();
+      self.StartTime = Date.now();
+      self.SingleStartTime = Date.now();
       self.Interval = setInterval(function () {
         const now = Date.now();
         const elapsedTime = now - self.StartTime;
         const singleElapsedTime = now - self.SingleStartTime;
-        self.Elapsed = (elapsedTime / 1000).toFixed(3);
-        self.ElapsedSingle = (singleElapsedTime / 1000).toFixed(3);
+        self.Elapsed = (elapsedTime / 1000).toFixed(2);
+        self.ElapsedSingle = (singleElapsedTime / 1000).toFixed(2);
         if (self.ShootCount >= self.Shoots) {
           clearInterval(self.Interval);
           self.Loading = false;
@@ -204,6 +221,7 @@ export default defineComponent({
     Stop() {
       this.Loading = false;
       this.IsWaiting = true;
+      this.ShowResult = false;
       clearInterval(this.Interval);
       this.WakeLock.release();
       this.WakeLockActive = false;
@@ -222,7 +240,7 @@ export default defineComponent({
       this.microphone.connect(this.analyser);
       this.MicRecInterval = setInterval(function () {
         const audioLevel = self.getCurrentAverageMicInputLevel(stream);
-        console.log(audioLevel);
+        //console.log(audioLevel);
         //self.audioInputDetected = audioLevel > threshold;
         self.audioInputDetected = audioLevel;
         if (
@@ -233,17 +251,17 @@ export default defineComponent({
           self.ShootAcquired = true;
           if (!self.IsWaiting) {
             self.ShootsOnTime.push({
-              tiro: self.ShootCount,
+              tiro: self.ShootCount + 1,
               risultato: `OK`,
             });
           } else {
             self.ShootsOnTime.push({
-              tiro: self.ShootCount,
+              tiro: self.ShootCount + 1,
               risultato: `KO`,
             });
           }
         }
-      }, 10);
+      }, 20);
     },
 
     getCurrentAverageMicInputLevel(stream: MediaStream): string {
@@ -284,5 +302,8 @@ export default defineComponent({
 canvas {
   box-sizing: content-box;
   margin-left: 9px;
+}
+.disable-dbl-tap-zoom {
+  touch-action: manipulation;
 }
 </style>

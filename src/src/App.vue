@@ -13,10 +13,7 @@ export default {
     <v-layout class="rounded rounded-md">
       <GlemaNavBar></GlemaNavBar>
       <GlemaNavigationDrawer></GlemaNavigationDrawer>
-      <v-main
-        class="d-flex align-center justify-center"
-        style="min-height: 300px"
-      >
+      <v-main class="align-center justify-center" style="min-height: 300px">
         <RouterView />
       </v-main>
     </v-layout>
