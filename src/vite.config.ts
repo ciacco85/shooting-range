@@ -20,9 +20,9 @@ export default defineConfig({
       //  enabled: true
       //},
       manifest: {
-        name: 'Cloudbadger',
-        short_name: 'Cloudbadger',
-        description: 'Cloudbadger.biz',
+        name: 'Shooting Range',
+        short_name: 'Shooting Range',
+        description: 'Applicazione per il tiro sportivo',
         theme_color: '#ffffff',
         icons: [
           {
