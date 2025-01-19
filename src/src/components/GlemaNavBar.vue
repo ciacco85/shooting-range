@@ -1,6 +1,6 @@
 <template>
   <v-app-bar app color="green-darken-1" dense>
-    <v-app-bar-nav-icon variant="text" @click.stop="switchDrawer()"></v-app-bar-nav-icon>
+    <!-- <v-app-bar-nav-icon variant="text" @click.stop="switchDrawer()"></v-app-bar-nav-icon> -->
     <v-toolbar-title style="cursor: pointer" @click="$router.push('/')">Shooting range</v-toolbar-title>
     <v-spacer></v-spacer>
   </v-app-bar>

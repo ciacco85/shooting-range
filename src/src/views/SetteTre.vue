@@ -31,7 +31,7 @@
       <v-card-text class="bg-surface-light pt-4">
         <v-tabs v-model="tab" bg-color="primary">
           <v-tab value="one">Configurazione</v-tab>
-          <v-tab value="two">Sperimentale</v-tab>
+          <v-tab value="two">Rilevazione colpi</v-tab>
         </v-tabs>
         <v-card-text>
           <v-tabs-window v-model="tab">
@@ -72,6 +72,13 @@
             </v-tabs-window-item>
 
             <v-tabs-window-item value="two">
+              <v-switch
+                label="Rileva colpi (usa Microfono - Beta)"
+                color="green"
+                baseColor="red"
+                @update:model-value="ChangeRecordShootAudio()"
+                v-model="RecordShootAudio"
+              ></v-switch>
               <v-number-input
                 :reverse="false"
                 controlVariant="split"
@@ -104,7 +111,7 @@
           <div>Sessione {{ ElapsedSingle }}</div>
           <div>Conteggio colpi {{ ShootCount }}</div>
 
-          <v-table>
+          <v-table v-if="RecordShootAudio">
             <thead>
               <tr>
                 <th class="text-left">Tiro</th>
@@ -155,6 +162,7 @@ export default defineComponent({
     audioContext: null,
     WakeLockSupported: false,
     WakeLockActive: false,
+    RecordShootAudio: false,
     analyser: null,
     microphone: null,
     MicRecInterval: null,
@@ -169,6 +177,7 @@ export default defineComponent({
   methods: {
     async Start() {
       const self = this;
+      clearInterval(self.Interval);
       const store = useRootStore();
 
       try {
@@ -218,6 +227,7 @@ export default defineComponent({
         }
       }, 10);
     },
+
     Stop() {
       this.Loading = false;
       this.IsWaiting = true;
@@ -226,6 +236,7 @@ export default defineComponent({
       this.WakeLock.release();
       this.WakeLockActive = false;
     },
+
     async setupMicInputListener(): Promise<undefined> {
       const self = this;
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -278,9 +289,14 @@ export default defineComponent({
 
       return Math.abs(averageLevel - 127).toFixed(2);
     },
+
+    ChangeRecordShootAudio() {
+      if (!this.RecordShootAudio) this.setupMicInputListener();
+      else clearInterval(this.MicRecInterval);
+    },
   },
+
   mounted() {
-    this.setupMicInputListener();
     const self = this;
     if ("wakeLock" in navigator) {
       self.WakeLockSupported = true;
