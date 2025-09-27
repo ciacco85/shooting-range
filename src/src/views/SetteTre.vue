@@ -1,98 +1,56 @@
 <template>
   <v-container>
-    <v-card
-      :loading="Loading"
-      title="Sette Tre"
-      :subtitle="CurrentDate"
-      style="background-color: gold"
-    >
+    <v-card :loading="Loading" title="Sette Tre" :subtitle="CurrentDate" style="background-color: gold">
       <v-card-actions style="background-color: beige">
-        <GlemaButton
-          @click="Start()"
-          icon="mdi-play"
-          color="primary"
-          class="mx-1"
-        >
-          <v-tooltip activator="parent" location="top"
-            >Start</v-tooltip
-          ></GlemaButton
-        >
-        <GlemaButton
-          @click="Stop()"
-          icon="mdi-stop"
-          color="primary"
-          class="mx-1"
-        >
-          <v-tooltip activator="parent" location="top"
-            >Stop</v-tooltip
-          ></GlemaButton
-        >
+        <GlemaButton @click="Start()" icon="mdi-play" color="primary" class="mx-1">
+          <v-tooltip activator="parent" location="top">Start</v-tooltip>
+        </GlemaButton>
+        <GlemaButton @click="Stop()" icon="mdi-stop" color="primary" class="mx-1">
+          <v-tooltip activator="parent" location="top">Stop</v-tooltip>
+        </GlemaButton>
+
       </v-card-actions>
       <v-card-text class="bg-surface-light pt-4">
         <v-tabs v-model="tab" bg-color="primary">
           <v-tab value="one">Configurazione</v-tab>
+          <v-tab value="sounds">Suoni</v-tab>
           <v-tab value="two">Rilevazione colpi</v-tab>
         </v-tabs>
         <v-card-text>
           <v-tabs-window v-model="tab">
             <v-tabs-window-item value="one">
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Colpi"
-                :hideInput="false"
-                :min="1"
-                density="compact"
-                :inset="false"
-                v-model="Shoots"
-                class="disable-dbl-tap-zoom"
-              ></v-number-input>
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Finestra di attesa"
-                :min="1"
-                density="compact"
-                :hideInput="false"
-                :inset="false"
-                v-model="WaitSeconds"
-                class="disable-dbl-tap-zoom"
-              ></v-number-input>
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Finestra di tiro"
-                :min="1"
-                density="compact"
-                :hideInput="false"
-                :inset="false"
-                v-model="ShootSeconds"
-                class="disable-dbl-tap-zoom"
-              ></v-number-input>
+              <v-number-input :reverse="false" controlVariant="split" label="Colpi" :hideInput="false" :min="1"
+                density="compact" :inset="false" v-model="Shoots" class="disable-dbl-tap-zoom"></v-number-input>
+              <v-number-input :reverse="false" controlVariant="split" label="Finestra di attesa" :min="1"
+                density="compact" :hideInput="false" :inset="false" v-model="WaitSeconds"
+                class="disable-dbl-tap-zoom"></v-number-input>
+              <v-number-input :reverse="false" controlVariant="split" label="Finestra di tiro" :min="1"
+                density="compact" :hideInput="false" :inset="false" v-model="ShootSeconds"
+                class="disable-dbl-tap-zoom"></v-number-input>
+
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="sounds">
+              <v-switch v-model="oldSound" label="Suoni precedenti" color="green" baseColor="red"></v-switch>
+
+              <v-slider v-model="freqWait" label="Frequenza attesa [Hz]" :min="20" :max="20000" step="10"
+                :thumb-label="'always'"></v-slider>
+              <v-slider v-model="durationWait" label="Durata attesa [ms]" :min="0" :max="1000" step="10"
+                :thumb-label="'always'"></v-slider>
+              <v-slider v-model="freqShoot" label="Frequenza tiro [Hz]" :min="20" :max="20000" step="10"
+                :thumb-label="'always'"></v-slider>
+              <v-slider v-model="durationShoot" label="Durata tiro [ms]" :min="20" :max="1000" step="10"
+                :thumb-label="'always'"></v-slider>
+              <v-combobox v-model="OscType" label="Forma d'onda"
+                :items="['sine', 'square', 'triangle', 'sawtooth']"></v-combobox>
             </v-tabs-window-item>
 
             <v-tabs-window-item value="two">
-              <v-switch
-                label="Rileva colpi (usa Microfono - Beta)"
-                color="green"
-                baseColor="red"
-                @update:model-value="ChangeRecordShootAudio()"
-                v-model="RecordShootAudio"
-              ></v-switch>
-              <v-number-input
-                :reverse="false"
-                controlVariant="split"
-                label="Soglia"
-                :hideInput="false"
-                :min="1"
-                :inset="false"
-                v-model="Threshold"
-              ></v-number-input>
-              <v-combobox
-                v-model="FFTsize"
-                label="FFT"
-                :items="[64, 128, 256, 512, 1024, 2048]"
-              ></v-combobox>
+              <v-switch label="Rileva colpi (usa Microfono - Beta)" color="green" baseColor="red"
+                @update:model-value="ChangeRecordShootAudio()" v-model="RecordShootAudio"></v-switch>
+              <v-number-input :reverse="false" controlVariant="split" label="Soglia" :hideInput="false" :min="1"
+                :inset="false" v-model="Threshold"></v-number-input>
+              <v-combobox v-model="FFTsize" label="FFT" :items="[64, 128, 256, 512, 1024, 2048]"></v-combobox>
               <div>
                 Schermo sempre accesso: supporto/attivo
                 {{ WakeLockSupported ? "OK" : "KO" }}/{{
@@ -131,12 +89,8 @@
         </div>
       </v-card-text>
     </v-card>
-    <label
-      >Sviluppata da Francesco Venturini. Per segnalazioni, aprire una issue sul
-      seguente </label
-    ><a target="_blank" href="https://github.com/ciacco85/shooting-range"
-      >repository</a
-    >
+    <label>Sviluppata da Francesco Venturini. Per segnalazioni, aprire una issue sul
+      seguente </label><a target="_blank" href="https://github.com/ciacco85/shooting-range">repository</a>
   </v-container>
 </template>
 
@@ -157,6 +111,12 @@ export default defineComponent({
     Elapsed: 0,
     Data: 0,
     ElapsedSingle: 0,
+    freqWait: 1000,
+    freqShoot: 3000,
+    durationWait: 1000,
+    durationShoot: 500,
+    OscType: "triangle" as OscillatorType,
+    oldSound: false,
     Loading: false,
     ShowResult: false,
     audioContext: null,
@@ -201,7 +161,15 @@ export default defineComponent({
       self.ShootsOnTime = [];
       self.ShootAcquired = false;
 
-      store.beep2();
+      if (self.oldSound)
+        store.beep2();
+      else
+        store.scheduleTone({
+          frequency: self.freqWait,
+          duration: self.durationWait,
+          type: self.OscType,
+        });
+
       self.StartTime = Date.now();
       self.SingleStartTime = Date.now();
       self.Interval = setInterval(function () {
@@ -215,13 +183,29 @@ export default defineComponent({
           self.Loading = false;
         }
         if (self.IsWaiting && self.ElapsedSingle >= self.WaitSeconds) {
-          store.beep1();
+
+          if (self.oldSound)
+            store.beep1();
+          else
+            store.scheduleTone({
+              frequency: self.freqShoot,
+              duration: self.durationShoot,
+              type: self.OscType,
+            });
+
           self.SingleStartTime = Date.now();
           self.IsWaiting = false;
         } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
           self.ShootAcquired = false;
           self.ShootCount += 1;
-          store.beep2();
+          if (self.oldSound)
+            store.beep2();
+          else
+            store.scheduleTone({
+              frequency: self.freqWait,
+              duration: self.durationWait,
+              type: self.OscType,
+            });
           self.SingleStartTime = Date.now();
           self.IsWaiting = true;
         }
@@ -319,6 +303,7 @@ canvas {
   box-sizing: content-box;
   margin-left: 9px;
 }
+
 .disable-dbl-tap-zoom {
   touch-action: manipulation;
 }
