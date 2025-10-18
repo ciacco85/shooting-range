@@ -31,15 +31,11 @@
             </v-tabs-window-item>
 
             <v-tabs-window-item value="sounds">
-              <v-switch v-model="oldSound" label="Suoni precedenti" color="green" baseColor="red"></v-switch>
-
-              <v-slider v-model="freqWait" label="Frequenza attesa [Hz]" :min="20" :max="20000" step="10"
+              <v-slider v-model="freqWait" label="Frequenza [Hz]" :min="100" :max="3000" step="50"
                 :thumb-label="'always'"></v-slider>
-              <v-slider v-model="durationWait" label="Durata attesa [ms]" :min="0" :max="1000" step="10"
+              <v-slider v-model="durationWait" label="Durata attesa [ms]" :min="0" :max="1000" step="50"
                 :thumb-label="'always'"></v-slider>
-              <v-slider v-model="freqShoot" label="Frequenza tiro [Hz]" :min="20" :max="20000" step="10"
-                :thumb-label="'always'"></v-slider>
-              <v-slider v-model="durationShoot" label="Durata tiro [ms]" :min="20" :max="1000" step="10"
+              <v-slider v-model="durationShoot" label="Durata tiro [ms]" :min="0" :max="1000" step="50"
                 :thumb-label="'always'"></v-slider>
               <v-combobox v-model="OscType" label="Forma d'onda"
                 :items="['sine', 'square', 'triangle', 'sawtooth']"></v-combobox>
@@ -68,7 +64,7 @@
           <div>Totale {{ Elapsed }}</div>
           <div>Sessione {{ ElapsedSingle }}</div>
           <div>Conteggio colpi {{ ShootCount }}</div>
-
+          <div>Cambio stato {{ ElapsedChangeState }}</div>
           <v-table v-if="RecordShootAudio">
             <thead>
               <tr>
@@ -110,13 +106,12 @@ export default defineComponent({
     IsWaiting: true,
     Elapsed: 0,
     Data: 0,
+    ElapsedChangeState: 0,
     ElapsedSingle: 0,
     freqWait: 1000,
-    freqShoot: 3000,
-    durationWait: 1000,
-    durationShoot: 500,
+    durationWait: 500,
+    durationShoot: 250,
     OscType: "triangle" as OscillatorType,
-    oldSound: false,
     Loading: false,
     ShowResult: false,
     audioContext: null,
@@ -139,7 +134,6 @@ export default defineComponent({
       const self = this;
       clearInterval(self.Interval);
       const store = useRootStore();
-
       try {
         self.WakeLock = await navigator.wakeLock.request("screen");
         self.WakeLockActive = true;
@@ -147,11 +141,13 @@ export default defineComponent({
         // The Wake Lock request has failed - usually system related, such as battery.
         self.WakeLockActive = `${err.name}, ${err.message}`;
       }
+      store.unlockAudio2();
 
       self.Loading = true;
       self.ShowResult = true;
       self.Elapsed = 0;
       self.ElapsedSingle = 0;
+      self.ElapsedChangeState = 0;
       self.ShootCount = 0;
       self.ShootsOnTime = [];
       self.IsWaiting = true;
@@ -160,20 +156,18 @@ export default defineComponent({
       self.audioInputDetected = 0;
       self.ShootsOnTime = [];
       self.ShootAcquired = false;
-
-      if (self.oldSound)
-        store.beep2();
-      else
+      
+      
         store.scheduleTone({
           frequency: self.freqWait,
           duration: self.durationWait,
           type: self.OscType,
         });
-
       self.StartTime = Date.now();
       self.SingleStartTime = Date.now();
       self.Interval = setInterval(function () {
         const now = Date.now();
+        store.unlockAudio2();
         const elapsedTime = now - self.StartTime;
         const singleElapsedTime = now - self.SingleStartTime;
         self.Elapsed = (elapsedTime / 1000).toFixed(2);
@@ -184,11 +178,10 @@ export default defineComponent({
         }
         if (self.IsWaiting && self.ElapsedSingle >= self.WaitSeconds) {
 
-          if (self.oldSound)
-            store.beep1();
-          else
+          
+            self.ElapsedChangeState = ((Date.now() - self.StartTime) / 1000).toFixed(2);;
             store.scheduleTone({
-              frequency: self.freqShoot,
+              frequency: self.freqWait,
               duration: self.durationShoot,
               type: self.OscType,
             });
@@ -198,9 +191,8 @@ export default defineComponent({
         } else if (!self.IsWaiting && self.ElapsedSingle >= self.ShootSeconds) {
           self.ShootAcquired = false;
           self.ShootCount += 1;
-          if (self.oldSound)
-            store.beep2();
-          else
+          
+            self.ElapsedChangeState = ((Date.now() - self.StartTime) / 1000).toFixed(2);;
             store.scheduleTone({
               frequency: self.freqWait,
               duration: self.durationWait,
@@ -282,6 +274,8 @@ export default defineComponent({
 
   mounted() {
     const self = this;
+    const store = useRootStore();
+    store.unlockAudio2();
     if ("wakeLock" in navigator) {
       self.WakeLockSupported = true;
     } else {

@@ -1,9 +1,8 @@
 <script lang="ts">
 import { RouterView } from "vue-router";
 import GlemaNavBar from "./components/GlemaNavBar.vue";
-import GlemaNavigationDrawer from "./components/GlemaNavigationDrawer.vue";
 export default {
-  components: { GlemaNavBar, GlemaNavigationDrawer },
+  components: { GlemaNavBar },
   setup() {},
 };
 </script>
@@ -12,7 +11,6 @@ export default {
   <v-app>
     <v-layout class="rounded rounded-md">
       <GlemaNavBar></GlemaNavBar>
-      <!-- <GlemaNavigationDrawer></GlemaNavigationDrawer> -->
       <v-main class="align-center justify-center" style="min-height: 300px">
         <RouterView />
       </v-main>
