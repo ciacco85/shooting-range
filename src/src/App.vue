@@ -12,7 +12,6 @@ export default {
       <GlemaNavBar></GlemaNavBar>
       <v-main class="align-center justify-center" style="min-height: 300px">
         <v-container>
-
           <RouterView />
         </v-container>
       </v-main>
