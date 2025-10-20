@@ -20,8 +20,8 @@ export default defineConfig({
       //  enabled: true
       //},
       manifest: {
-        name: 'Shooting Range',
-        short_name: 'Shooting Range',
+        name: 'Shooting Range TSN',
+        short_name: 'SR TSN',
         description: 'Applicazione per il tiro sportivo',
         theme_color: '#ffffff',
         icons: [
