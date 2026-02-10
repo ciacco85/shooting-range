@@ -24,11 +24,6 @@ export const useRootStore = defineStore("Root", {
       startTime = startTime ?? this.audioCtx.currentTime;
       duration = duration / 1000; // convert ms to seconds
 
-      // Some browsers need resume() after a user gesture
-      // if (this.audioCtx.state === "suspended")
-      //   this.audioCtx.resume();
-
-
       const osc = this.audioCtx.createOscillator();
       const g = this.audioCtx.createGain();
 
@@ -46,7 +41,7 @@ export const useRootStore = defineStore("Root", {
       osc.start(startTime);
       osc.stop(startTime + duration);
     },
-    unlockAudio2() {
+    unlockAudio() {
       this.silenSound.play()
     },
   },

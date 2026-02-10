@@ -135,7 +135,7 @@ export default defineComponent({
         // The Wake Lock request has failed - usually system related, such as battery.
         self.WakeLockActive = `${err.name}, ${err.message}`;
       }
-      store.unlockAudio2();
+      store.unlockAudio();
 
       self.Loading = true;
       self.ShowResult = true;
@@ -161,7 +161,7 @@ export default defineComponent({
       self.SingleStartTime = Date.now();
       self.Interval = setInterval(function () {
         const now = Date.now();
-        store.unlockAudio2();
+        store.unlockAudio();
         const elapsedTime = now - self.StartTime;
         const singleElapsedTime = now - self.SingleStartTime;
         self.Elapsed = (elapsedTime / 1000).toFixed(2);
@@ -269,7 +269,6 @@ export default defineComponent({
   mounted() {
     const self = this;
     const store = useRootStore();
-    store.unlockAudio2();
     if ("wakeLock" in navigator) {
       self.WakeLockSupported = true;
     } else {

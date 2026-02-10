@@ -11,18 +11,19 @@
     "type-check": "vue-tsc --build --force",
     "swa": "swa start http://localhost:5173 --run \"npm run dev\"",
     "devswa": "concurrently --kill-others \"npm run dev\" \"npm run swa\"",
-    "production-deploy": "vite build -- && swa deploy .\\dist\\ -R TestApp -n shooting-range --env production -d TOKEN"
+    "production-deploy": "vite build -- && swa deploy .\\dist\\ -R TestApp -n shooting-range --env production -d ",
+    "production-deploy2": "vite build -- && swa deploy .\\dist\\ -R rg-shooting-range -n stapp-shooting-range --env production -d "
   },
   "dependencies": {
     "pinia": "3.x",
     "roboto-fontface": "*",
     "vue": "3.x",
-    "vue-router": "4.x",
+    "vue-router": "5.x",
     "vuetify": "3.x",
     "webfontloader": "1.x"
   },
   "devDependencies": {
-    "@azure/static-web-apps-cli": "2.0.7",
+    "@azure/static-web-apps-cli": "2.0.8",
     "@mdi/font": "7.x",
     "@tsconfig/node22": "22.x",
     "@types/node": "22.x",
